@@ -1,0 +1,42 @@
+Resources:
+  #=================================
+  # VPCの作成
+  #=================================
+  tpVPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: Name
+          Value: techpit
+
+  #=================================
+  # インターネットゲートウェイの作成
+  #=================================
+  tpInternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key: Name
+          Value: techpit
+
+  tpAttachGateway:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      InternetGatewayId: !Ref tpInternetGateway
+      VpcId: !Ref tpVPC
+
+  #=================================
+  # サブネットの作成
+  #=================================
+  tpSubnet01a:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      AvailabilityZone: 'ap-northeast-1a'
+      CidrBlock: 10.0.0.0/24
+      Tags:
+        - Key: Name
+          Value: subnet01a
+      VpcId: !Ref tpVPC
