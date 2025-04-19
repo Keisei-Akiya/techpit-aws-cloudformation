@@ -1,0 +1,205 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create VPC and subnets (public, protected, private) in 1 AZ.
+
+# ==================== Parameters ====================
+Parameters:
+  SystemName:
+    Type: String
+    Default: techpit
+  EnvironmentName:
+    Type: String
+    Default: dev
+  VpcCidrBlock:
+    Type: String
+    Default: 10.0.0.0/16
+  PublicSubnetAz1Cidr:
+    Type: String
+    Default: 10.0.0.0/24
+  ProtectedSubnetAz1Cidr:
+    Type: String
+    Default: 10.0.1.0/24
+  PrivateSubnetAz1Cidr:
+    Type: String
+    Default: 10.0.2.0/24
+  Az1:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: ap-northeast-1a
+
+# ==================== Resources ====================
+Resources:
+  # -------------------- VPC --------------------
+  # VPC
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidrBlock
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${SystemName}-${EnvironmentName}-vpc'
+        - Key: System
+          Value: !Ref SystemName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # -------------------- Internet Gateway --------------------
+  # IGW
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${SystemName}-${EnvironmentName}-igw'
+        - Key: System
+          Value: !Ref SystemName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # attachment
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  # -------------------- Subnets --------------------
+  # Public Subnet
+  PublicSubnetAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref Az1
+      CidrBlock: !Ref PublicSubnetAz1Cidr
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${SystemName}-${EnvironmentName}-subnet-public-az1'
+        - Key: System
+          Value: !Ref SystemName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Protected Subnet
+  ProtectedSubnetAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref Az1
+      CidrBlock: !Ref ProtectedSubnetAz1Cidr
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${SystemName}-${EnvironmentName}-subnet-protected-az1'
+        - Key: System
+          Value: !Ref SystemName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Private Subnet
+  PrivateSubnetAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref Az1
+      CidrBlock: !Ref PrivateSubnetAz1Cidr
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${SystemName}-${EnvironmentName}-subnet-private-az1'
+        - Key: System
+          Value: !Ref SystemName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # -------------------- Route Tables --------------------
+  # Public
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${SystemName}-${EnvironmentName}-rtb-public-az1'
+
+  # Protected
+  ProtectedRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${SystemName}-${EnvironmentName}-rtb-protected-az1'
+
+  # Private
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${SystemName}-${EnvironmentName}-rtb-private-az1'
+
+  # -------------------- Routes --------------------
+  # Public Route
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+      RouteTableId: !Ref PublicRouteTable
+
+  # Protected Route
+  ProtectedRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref ProtectedRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  # -------------------- SubnetRouteTableAssociation --------------------
+  # Public
+  PublicRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetAz1
+
+  # Protected
+  ProtectedRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref ProtectedSubnetAz1
+      RouteTableId: !Ref ProtectedRouteTable
+
+  # Private
+  PrivateRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetAz1
+      RouteTableId: !Ref PrivateRouteTable
+
+  # -------------------- NAT Gateway --------------------
+  # EIP
+  EipNat:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub '${SystemName}-${EnvironmentName}-eip'
+        - Key: System
+          Value: !Ref SystemName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # NAT Gateway
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt EipNat.AllocationId
+      SubnetId: !Ref PublicSubnetAz1
+      Tags:
+        - Key: Name
+          Value: !Sub '${SystemName}-${EnvironmentName}-nat'
+        - Key: System
+          Value: !Ref SystemName
+        - Key: Environment
+          Value: !Ref EnvironmentName
