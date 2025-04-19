@@ -40,3 +40,27 @@ Resources:
         - Key: Name
           Value: subnet01a
       VpcId: !Ref tpVPC
+
+  #=================================
+  # ルートテーブルの作成
+  #=================================
+  tpRouteTable01:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      Tags:
+        - Key: Name
+          Value: techpit01
+      VpcId: !Ref tpVPC
+  # サブネットとルートテーブルの関連付け
+  tpRouteTableAssociation01a:
+    Type: 'AWS::EC2::RouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref tpRouteTable01
+      SubnetId: !Ref tpSubnet01a
+  # ルートの作成
+  tpRoute01:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref tpInternetGateway
+      RouteTableId: !Ref tpRouteTable01
