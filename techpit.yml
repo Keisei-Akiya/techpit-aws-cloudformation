@@ -6,33 +6,43 @@ Parameters:
   SystemName:
     Type: String
     Default: techpit
+
   EnvironmentName:
     Type: String
     Default: dev
+
   VpcCidrBlock:
     Type: String
     Default: 10.0.0.0/16
+
   PublicSubnetAz1Cidr:
     Type: String
     Default: 10.0.0.0/24
+
   ProtectedSubnetAz1Cidr:
     Type: String
     Default: 10.0.1.0/24
+
   PrivateSubnetAz1Cidr:
     Type: String
     Default: 10.0.2.0/24
+
   PublicSubnetAz2Cidr:
     Type: String
     Default: 10.0.100.0/24
+
   ProtectedSubnetAz2Cidr:
     Type: String
     Default: 10.0.101.0/24
+
   PrivateSubnetAz2Cidr:
     Type: String
     Default: 10.0.102.0/24
+
   Az1:
     Type: AWS::EC2::AvailabilityZone::Name
     Default: ap-northeast-1a
+
   Az2:
     Type: AWS::EC2::AvailabilityZone::Name
     Default: ap-northeast-1c
@@ -249,15 +259,15 @@ Resources:
   PublicRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnetAz1
+      RouteTableId: !Ref PublicRouteTable
 
   # Public AZ2
   PublicRouteTableAssociationAz2:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnetAz2
+      RouteTableId: !Ref PublicRouteTable
 
   # Protected AZ1
   ProtectedRouteTableAssociationAz1:
