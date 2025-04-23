@@ -39,6 +39,18 @@ Parameters:
     Type: String
     Default: 10.0.102.0/24
 
+  PublicSubnetAz3Cidr:
+    Type: String
+    Default: 10.0.200.0/24
+
+  ProtectedSubnetAz3Cidr:
+    Type: String
+    Default: 10.0.201.0/24
+
+  PrivateSubnetAz3Cidr:
+    Type: String
+    Default: 10.0.202.0/24
+
   Az1:
     Type: AWS::EC2::AvailabilityZone::Name
     Default: ap-northeast-1a
@@ -46,6 +58,10 @@ Parameters:
   Az2:
     Type: AWS::EC2::AvailabilityZone::Name
     Default: ap-northeast-1c
+
+  Az3:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: ap-northeast-1d
 
 # ==================== Resources ====================
 Resources:
@@ -116,6 +132,21 @@ Resources:
         - Key: Environment
           Value: !Ref EnvironmentName
 
+  # Public Subnet AZ3
+  PublicSubnetAz3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref Az3
+      CidrBlock: !Ref PublicSubnetAz3Cidr
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${SystemName}-${EnvironmentName}-subnet-public-az3'
+        - Key: System
+          Value: !Ref SystemName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
   # Protected Subnet AZ1
   ProtectedSubnetAz1:
     Type: AWS::EC2::Subnet
@@ -146,6 +177,21 @@ Resources:
         - Key: Environment
           Value: !Ref EnvironmentName
 
+  # Protected Subnet AZ3
+  ProtectedSubnetAz3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref Az3
+      CidrBlock: !Ref ProtectedSubnetAz3Cidr
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${SystemName}-${EnvironmentName}-subnet-protected-az3'
+        - Key: System
+          Value: !Ref SystemName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
   # Private Subnet AZ1
   PrivateSubnetAz1:
     Type: AWS::EC2::Subnet
@@ -171,6 +217,21 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${SystemName}-${EnvironmentName}-subnet-private-az2'
+        - Key: System
+          Value: !Ref SystemName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Private Subnet AZ3
+  PrivateSubnetAz3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Ref Az3
+      CidrBlock: !Ref PrivateSubnetAz3Cidr
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${SystemName}-${EnvironmentName}-subnet-private-az3'
         - Key: System
           Value: !Ref SystemName
         - Key: Environment
@@ -216,6 +277,19 @@ Resources:
         - Key: Environment
           Value: !Ref EnvironmentName
 
+  # Protected AZ3
+  ProtectedRouteTableAz3:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${SystemName}-${EnvironmentName}-rtb-protected-az3'
+        - Key: System
+          Value: !Ref SystemName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
   # Private
   PrivateRouteTable:
     Type: AWS::EC2::RouteTable
@@ -254,6 +328,14 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref NatGatewayAz2
 
+  # Protected Route AZ3
+  ProtectedRouteAz3:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref ProtectedRouteTableAz3
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayAz3
+
   # -------------------- SubnetRouteTableAssociation --------------------
   # Public AZ1
   PublicRouteTableAssociation:
@@ -267,6 +349,13 @@ Resources:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnetAz2
+      RouteTableId: !Ref PublicRouteTable
+
+  # Public AZ3
+  PublicRouteTableAssociationAz3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetAz3
       RouteTableId: !Ref PublicRouteTable
 
   # Protected AZ1
@@ -283,6 +372,13 @@ Resources:
       SubnetId: !Ref ProtectedSubnetAz2
       RouteTableId: !Ref ProtectedRouteTableAz2
 
+  # Protected AZ3
+  ProtectedRouteTableAssociationAz3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref ProtectedSubnetAz3
+      RouteTableId: !Ref ProtectedRouteTableAz3
+
   # Private AZ1
   PrivateRouteTableAssociationAz1:
     Type: AWS::EC2::SubnetRouteTableAssociation
@@ -295,6 +391,13 @@ Resources:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnetAz2
+      RouteTableId: !Ref PrivateRouteTable
+
+  # Private AZ3
+  PrivateRouteTableAssociationAz3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetAz3
       RouteTableId: !Ref PrivateRouteTable
 
   # -------------------- NAT Gateway --------------------
@@ -323,6 +426,18 @@ Resources:
         - Key: Environment
           Value: !Ref EnvironmentName
 
+  EipNatAz3:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub '${SystemName}-${EnvironmentName}-eip-az3'
+        - Key: System
+          Value: !Ref SystemName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
   # NAT Gateway
   NatGatewayAz1:
     Type: AWS::EC2::NatGateway
@@ -345,6 +460,19 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${SystemName}-${EnvironmentName}-nat-az2'
+        - Key: System
+          Value: !Ref SystemName
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  NatGatewayAz3:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt EipNatAz3.AllocationId
+      SubnetId: !Ref PublicSubnetAz3
+      Tags:
+        - Key: Name
+          Value: !Sub '${SystemName}-${EnvironmentName}-nat-az3'
         - Key: System
           Value: !Ref SystemName
         - Key: Environment
