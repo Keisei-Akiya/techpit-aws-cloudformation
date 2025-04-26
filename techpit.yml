@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Create VPC and subnets (public, protected, private) in 1 AZ.
+Description: Create VPC and subnets (public, protected, private) in 3 AZ.
 
 # ==================== Parameters ====================
 Parameters:
@@ -62,6 +62,26 @@ Parameters:
   Az3:
     Type: AWS::EC2::AvailabilityZone::Name
     Default: ap-northeast-1d
+
+# ==================== Outputs ====================
+Outputs:
+  VpcId:
+    Description: The VPC's ID
+    Value: !Ref VPC
+    Export:
+      Name: !Sub '${SystemName}-${EnvironmentName}-vpc-id'
+
+  VpcCidrBlock:
+    Description: This is the segmentation of the NW
+    Value: !GetAtt VPC.CidrBlock
+    Export:
+      Name: !Sub '${SystemName}-${EnvironmentName}-vpc-cidr'
+
+  Igw:
+    Description: The Internet Gateway's ID
+    Value: !Ref InternetGateway
+    Export:
+      Name: !Sub '${SystemName}-${EnvironmentName}-igw-id'
 
 # ==================== Resources ====================
 Resources:
